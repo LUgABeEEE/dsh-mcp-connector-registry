@@ -1383,6 +1383,82 @@
     },
     {
       "schemaVersion": 1,
+      "id": "exa-search",
+      "name": "Exa·网络搜索",
+      "vendor": "Exa",
+      "icon": "🔎",
+      "category": "调研分析",
+      "summary": "匿名语义网页搜索 / 网页抓取 / 高级检索",
+      "description": "接入 Exa 官方远程 MCP 的匿名基础搜索服务，无需登录或 API Key。仅启用网页搜索、网页抓取和高级检索三个工具，不启用研究 Agent 或账户计费能力。服务方提供免费限流使用，不承诺永久免费或无限量；遇到限流请等待后重试，本卡片不提供自动登录、付费升级或收费工具回退。请仅提交可公开的检索词与网页地址。",
+      "tags": [
+        "Exa",
+        "网页搜索",
+        "语义搜索",
+        "网页抓取",
+        "匿名使用",
+        "官方 MCP"
+      ],
+      "published": true,
+      "featured": false,
+      "homepage": "https://exa.ai/docs/get-started/exa-mcp",
+      "probeStatus": "unverified",
+      "auth": {
+        "mode": "none"
+      },
+      "servers": [
+        {
+          "serverKey": "exa-search",
+          "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa",
+          "serverName": "exa-search",
+          "transport": "streamable-http",
+          "headers": {
+            "Accept": "application/json, text/event-stream"
+          }
+        }
+      ],
+      "promptVariables": [
+        {
+          "name": "topic",
+          "label": "调研主题",
+          "default": "Exa MCP server",
+          "placeholder": "例如：Exa MCP server",
+          "required": true
+        },
+        {
+          "name": "url",
+          "label": "网页地址",
+          "default": "https://exa.ai",
+          "placeholder": "例如：https://exa.ai",
+          "required": true
+        },
+        {
+          "name": "site",
+          "label": "限定站点",
+          "default": "exa.ai",
+          "placeholder": "例如：exa.ai",
+          "required": true
+        }
+      ],
+      "prompts": [
+        {
+          "title": "调研最新动态",
+          "text": "用 Exa MCP 搜索「{{topic}}」的最新动态，优先采用官方网站和一手资料，并列出来源链接",
+          "server": "exa-search"
+        },
+        {
+          "title": "提取网页要点",
+          "text": "用 Exa MCP 读取这个网页的正文与关键事实，区分原文信息与推断：{{url}}",
+          "server": "exa-search"
+        },
+        {
+          "title": "限定站点与时间检索",
+          "text": "用 Exa MCP 的高级检索查询「{{topic}}」，限定在 {{site}} 且仅取近期内容，输出带日期的来源清单",
+          "server": "exa-search"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "faostat-food-agriculture",
       "name": "FAOSTAT 全球粮农统计",
       "vendor": "cyanheads（独立社区项目）",
