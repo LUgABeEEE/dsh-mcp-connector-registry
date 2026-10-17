@@ -53,6 +53,7 @@
         "properties": {
           "serverKey": { "type": "string", "minLength": 1 },
           "url": { "type": "string", "minLength": 1 },
+          "oauthResource": { "type": "string", "minLength": 1, "description": "Canonical OAuth resource identifier; requires dsh-mcp-connector >= 0.2.71." },
           "command": { "type": "string", "minLength": 1 },
           "args": { "type": "array", "items": { "type": "string" } },
           "env": { "type": "object", "additionalProperties": { "type": "string" } },
