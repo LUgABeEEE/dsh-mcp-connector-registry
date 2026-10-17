@@ -95,16 +95,16 @@
     "gates": []
   },
   "review": {
-    "decision": "pending",
+    "decision": "approved",
     "proposedConnectorId": "exa-search",
-    "reviewedAt": null,
-    "reviewedBy": null,
-    "notes": "维护者要求收窄为匿名基础搜索。旧 OAuth 验收报告不再作为上架依据；已由 Codex 执行新的匿名协议级验收，等待维护者人工审阅批准。不冒用贡献者或维护者身份填写批准。"
+    "reviewedAt": "2026-10-17T03:41:29Z",
+    "reviewedBy": "duhu2000 (maintainer approval in task; recorded by Codex)",
+    "notes": "维护者已阅匿名范围、一次真实搜索通过及验收限制，并在说明剩余人工批准、CI、合并流程后明确回复继续。Codex 据此记录批准，仅适用于显式三个匿名基础工具；不接受旧 OAuth 报告作为当前依据，不批准 agent_run 或账户计费能力。"
   },
   "runtimeAcceptance": {
     "status": "pass",
     "checkedAt": "2026-10-17T03:27:35.752Z",
-    "reviewedBy": "Codex (automated anonymous protocol acceptance; human approval pending)",
+    "reviewedBy": "Codex (automated anonymous protocol acceptance)",
     "reportUrl": "https://github.com/duhu2000/dsh-mcp-connector-registry/blob/main/docs/runtime-acceptance/exa-2026-10-17/exa-search.md",
     "notes": "仅匿名 initialize、tools/list 与一次公开 web_search_exa 调用通过。服务端版本 3.5.0；三个工具，无 agent_run。未验证 DSH UI、限流恢复、网页抓取或高级检索实际调用；未使用账户或凭据。"
   },
