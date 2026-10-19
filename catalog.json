@@ -4624,14 +4624,14 @@
       "icon": "🧬",
       "category": "调研分析",
       "summary": "蛋白质结构 / 序列 / 配体 / 注释与交叉引用",
-      "description": "通过 RCSB 官方 rcsb-mcp Python 包启动本地 stdio Server，查询 Protein Data Bank 的结构、序列、化学组分、功能注释以及 PDB、UniProt、NCBI 之间的交叉引用。公开数据查询无需 API Key；运行要求 Python 3.10+ 与 uv/uvx。工具面向公共科学数据，但用户提供的序列、SMILES 或研究条件会发送至 RCSB API，未公开或受限制的研究数据应先脱敏并确认可外发。",
+      "description": "通过 RCSB 官方托管的 MCP Server 查询 Protein Data Bank 的结构、序列、化学组分、功能注释以及 PDB、UniProt、NCBI 之间的交叉引用。免安装、无需 API Key；官方另提供本地 stdio 包 rcsb-mcp（uvx rcsb-mcp，需 Python 3.10+ 与 uv/uvx），用于固定版本或本地开发，数据查询仍需联网，用法见官方仓库。工具面向公共科学数据，但用户提供的序列、SMILES 或研究条件会发送至 RCSB API，未公开或受限制的研究数据应先脱敏并确认可外发。注意：官方当前将托管端点标注为 beta，工具与行为可能变更，关键结果应回 RCSB.org 复核。",
       "tags": [
         "RCSB PDB",
         "蛋白质结构",
         "生物信息",
         "序列",
         "配体",
-        "stdio",
+        "Hosted MCP",
         "官方 MCP"
       ],
       "published": true,
@@ -4645,11 +4645,11 @@
         {
           "serverKey": "rcsb-pdb",
           "serverName": "rcsb-pdb",
-          "command": "uvx",
-          "args": [
-            "rcsb-mcp"
-          ],
-          "transport": "stdio"
+          "url": "https://mcp-beta.rcsb.org/mcp",
+          "transport": "streamable-http",
+          "headers": {
+            "Accept": "application/json, text/event-stream"
+          }
         }
       ],
       "prompts": [
