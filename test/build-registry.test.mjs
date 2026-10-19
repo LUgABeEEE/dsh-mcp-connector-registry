@@ -259,8 +259,13 @@ test('第六批精选连接器覆盖官方远程 MCP 与安全 stdio 本机配�
   assert.equal(byId.drawio.servers[0].url, 'https://mcp.draw.io/mcp');
   assert.match(byId.drawio.description, /MCP Apps/);
 
-  assert.equal(byId['rcsb-pdb'].servers[0].command, 'uvx');
-  assert.deepEqual(byId['rcsb-pdb'].servers[0].args, ['rcsb-mcp']);
+  assert.equal(byId['rcsb-pdb'].servers[0].url, 'https://mcp-beta.rcsb.org/mcp');
+  assert.equal(byId['rcsb-pdb'].servers[0].transport, 'streamable-http');
+  assert.equal(byId['rcsb-pdb'].servers[0].command, undefined);
+  assert.equal(byId['rcsb-pdb'].auth.mode, 'none');
+  assert.equal(byId['rcsb-pdb'].featured, false);
+  assert.match(byId['rcsb-pdb'].description, /数据查询仍需联网/);
+  assert.match(byId['rcsb-pdb'].description, /beta/);
   assert.deepEqual(byId['minimax-mcp'].servers[0].args, ['minimax-mcp', '-y']);
   assert.deepEqual(byId['minimax-mcp'].servers[0].credentialBindings, {
     MINIMAX_API_KEY: 'apiKey',
