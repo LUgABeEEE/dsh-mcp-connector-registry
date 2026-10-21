@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import {
+  buildMonthlyBatch,
   renderMonthlyBatch,
   selectMonthlyBatch,
 } from '../scripts/build-monthly-batch.mjs';
@@ -38,6 +43,41 @@ test('monthly report blocks rather than weakening gates when fewer than four qua
   const body = renderMonthlyBatch(report, [candidate(1)], { size: 10 });
   assert.match(body, /Blocked: fewer than four/);
   assert.match(body, /never opens or merges/);
+});
+
+test('monthly recovery refuses incomplete, unknown, incremental or malformed snapshots', () => {
+  const report = { generatedAt: '2026-10-21T00:00:00Z', source: { complete: true }, candidates: [candidate(1)] };
+  assert.equal(buildMonthlyBatch(report).candidates.length, 1);
+  for (const complete of [false, undefined, 'true', null]) {
+    assert.throws(() => buildMonthlyBatch({ ...report, source: { complete } }), /explicitly complete/);
+  }
+  assert.throws(() => buildMonthlyBatch(null), /explicitly complete/);
+  assert.throws(() => buildMonthlyBatch({ ...report, source: { complete: true, updatedSince: '2026-10-20' } }), /incremental/);
+  assert.throws(() => buildMonthlyBatch({ ...report, generatedAt: 'invalid' }), /timestamp/);
+  assert.throws(() => buildMonthlyBatch({ ...report, candidates: null }), /candidates array/);
+});
+
+test('incomplete monthly CI preserves artifacts and fails rather than silently skipping publication', async () => {
+  const workflow = await readFile(new URL('../.github/workflows/discovery.yml', import.meta.url), 'utf8');
+  const artifact = workflow.indexOf('name: monthly-data-mcp-review-batch');
+  const failure = workflow.indexOf('name: Fail visibly when the monthly source is incomplete');
+  const publication = workflow.indexOf('name: Create or update the single monthly review issue');
+  assert.ok(artifact < failure && failure < publication);
+  assert.match(workflow.slice(failure, publication), /always\(\).*steps\.discover\.outcome == 'success'.*outputs\.complete == 'false'/);
+  assert.match(workflow.slice(failure, publication), /core\.setFailed/);
+});
+
+test('monthly CLI preserves last-good output when recovery input is incomplete', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'registry-monthly-test-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const input = join(directory, 'report.json');
+  const output = join(directory, 'monthly.md');
+  await writeFile(input, JSON.stringify({ source: { complete: false }, candidates: [] }));
+  await writeFile(output, 'last good monthly report');
+  const result = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/build-monthly-batch.mjs', import.meta.url)), '--input', input, '--output', output], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /explicitly complete/);
+  assert.equal(await readFile(output, 'utf8'), 'last good monthly report');
 });
 
 function fakeGithub(existing = []) {

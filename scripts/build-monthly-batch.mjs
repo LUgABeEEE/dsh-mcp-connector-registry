@@ -19,6 +19,18 @@ function cell(value) {
   return String(value ?? '').replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
 }
 
+export function buildMonthlyBatch(report, { size = 10 } = {}) {
+  // Manual recovery must obey the same completeness boundary as scheduled CI.
+  if (report?.source?.complete !== true) {
+    throw new Error('Monthly batch requires an explicitly complete discovery snapshot; preserve the last good issue and rerun full discovery');
+  }
+  if (report.source.updatedSince) throw new Error('Monthly batch requires full discovery, not an incremental window');
+  if (!report.generatedAt || !Number.isFinite(Date.parse(report.generatedAt))) throw new Error('Monthly batch requires a valid source timestamp');
+  if (!Array.isArray(report.candidates)) throw new Error('Candidate report must contain a candidates array');
+  const candidates = selectMonthlyBatch(report.candidates, { size });
+  return { candidates, markdown: renderMonthlyBatch(report, candidates, { size }) };
+}
+
 export function renderMonthlyBatch(report, candidates, { size }) {
   const lines = [
     '# Monthly data MCP review batch',
@@ -61,9 +73,8 @@ function parseArgs(argv) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const report = JSON.parse(await readFile(resolve(options.input), 'utf8'));
-  if (!Array.isArray(report.candidates)) throw new Error('Candidate report must contain a candidates array');
-  const candidates = selectMonthlyBatch(report.candidates, { size: options.size });
-  await writeFile(resolve(options.output), renderMonthlyBatch(report, candidates, { size: options.size }));
+  const { candidates, markdown } = buildMonthlyBatch(report, { size: options.size });
+  await writeFile(resolve(options.output), markdown);
   console.log(`monthly batch: ${candidates.length}/${options.size} candidates -> ${resolve(options.output)}`);
 }
 

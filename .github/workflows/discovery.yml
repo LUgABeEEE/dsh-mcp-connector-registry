@@ -110,6 +110,15 @@ jobs:
           name: monthly-data-mcp-review-batch
           path: candidate-output/
           retention-days: 90
+      - name: Fail visibly when the monthly source is incomplete
+        if: always() && steps.discover.outcome == 'success' && steps.completeness.outputs.complete == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await core.summary.addHeading('Monthly discovery incomplete')
+              .addRaw('The last good monthly issue was preserved. Inspect the uploaded candidate artifacts, then rerun this workflow with mode=monthly. No candidates were published.')
+              .write();
+            core.setFailed('Incomplete Registry snapshot: monthly issue not updated. Rerun full monthly discovery.');
       - name: Create or update the single monthly review issue
         if: steps.completeness.outputs.complete == 'true'
         uses: actions/github-script@v7
