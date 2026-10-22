@@ -35,13 +35,38 @@ test('stdio preflight can hash a selected non-secret tool result without retaini
     timeoutMs: 5_000,
     tool: 'fixture_read',
     toolArgs: {},
+    expectedText: 'fixture-result',
   });
   assert.equal(report.decision, 'pass');
   assert.deepEqual(report.call.contentTypes, ['text']);
   assert.equal(report.call.status, 'success');
   assert.equal(report.call.credentialScan.status, 'pass');
   assert.equal('content' in report.call, false);
+  assert.equal(report.call.contentAssertion.status, 'pass');
+  assert.equal(report.call.textCharacters, 14);
   assert.match(report.call.responseSha256, /^[a-f0-9]{64}$/);
+});
+
+for (const flag of ['--missing-annotations', '--write-tool', '--destructive-tool']) {
+  test(`stdio preflight blocks unsafe tool annotations: ${flag}`, async () => {
+    await assert.rejects(runStdioPreflight({
+      command: process.execPath,
+      args: [fileURLToPath(new URL('../fixtures/stdio-server.mjs', import.meta.url)), flag],
+      tool: 'fixture_read', timeoutMs: 5_000,
+    }), /explicitly declare readOnlyHint/);
+  });
+}
+
+test('stdio preflight fails a successful but semantically wrong fixture response', async () => {
+  await assert.rejects(runStdioPreflight({
+    command: process.execPath,
+    args: [fileURLToPath(new URL('../fixtures/stdio-server.mjs', import.meta.url))],
+    tool: 'fixture_read', expectedText: 'missing fixture text', timeoutMs: 5_000,
+  }), /expected public fixture text/);
+});
+
+test('stdio preflight validates cwd before spawning', async () => {
+  await assert.rejects(runStdioPreflight({ command: process.execPath, cwd: '.' }), /absolute path/);
 });
 
 test('stdio preflight rejects credential-shaped process output', async () => {

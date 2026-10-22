@@ -68,3 +68,9 @@ The scheduled workflow uses a fixed marker to create or update one daily watchli
 需要协作复核的上架包可暂存在 `candidates/drafts/<batch>/`。草案目录不参与目录构建或新增
 Connector CI 门禁；其中的 `review.decision` 必须保持 `pending`，直至真实维护者完成来源审核。
 批准后才可将描述符和记录分别迁入 `connectors/` 与 `candidates/records/`。
+
+本地 stdio 候选的隔离流程见 [Firefox / Hyperconsciousness 验收准备](../docs/review-batches/isolated-stdio-acceptance.md)。
+通用 `candidates:stdio-preflight` 支持绝对 `--cwd` 和 `--expected-text` 内容断言，
+只允许显式只读且非破坏性的工具注解；仍需人工核对工具实现、参数和授权范围。
+发现报告与月度批次分别展示评分、公开可达性、已记录运行验收和已记录人工审核，
+不能把高分、`selected` 或探测成功当成上架批准。

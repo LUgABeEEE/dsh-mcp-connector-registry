@@ -11,6 +11,7 @@ import {
   selectMonthlyBatch,
 } from '../scripts/build-monthly-batch.mjs';
 import { upsertDiscoveryIssue } from '../scripts/discovery/github-issue.mjs';
+import { renderCandidateReport } from '../scripts/discover-candidates.mjs';
 
 function candidate(index, overrides = {}) {
   return {
@@ -43,6 +44,17 @@ test('monthly report blocks rather than weakening gates when fewer than four qua
   const body = renderMonthlyBatch(report, [candidate(1)], { size: 10 });
   assert.match(body, /Blocked: fewer than four/);
   assert.match(body, /never opens or merges/);
+});
+
+test('high score and passing public probe never imply runtime or human approval', () => {
+  const item = candidate(0, { score: { band: 'selected', total: 100 }, evidence: [], transports: [] });
+  const source = { generatedAt: '2026-10-22T00:00:00Z', source: { complete: true },
+    summary: { scoreDistribution: { selected: 1 } }, candidates: [item], rejected: [], excluded: [] };
+  for (const body of [renderMonthlyBatch(source, [item], { size: 4 }), renderCandidateReport(source)]) {
+    assert.match(body, /Recorded runtime.*Recorded human review/);
+    assert.match(body, /pass \| not-run \| pending/);
+    assert.match(body, /not business acceptance/);
+  }
 });
 
 test('monthly recovery refuses incomplete, unknown, incremental or malformed snapshots', () => {
