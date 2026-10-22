@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { basename, resolve } from 'node:path';
+import { basename, isAbsolute, resolve } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { detectCredentialExposure } from './run-runtime-acceptance.mjs';
@@ -41,6 +41,8 @@ export async function runStdioPreflight({
   reviewer = 'local-runtime-reviewer',
   tool,
   toolArgs = {},
+  cwd,
+  expectedText,
   spawnImpl = spawn,
 } = {}) {
   if (!command || typeof command !== 'string') throw new Error('A command is required');
@@ -51,11 +53,17 @@ export async function runStdioPreflight({
   if (tool && !/^[A-Za-z0-9_.:-]+$/.test(tool)) throw new Error('tool must be a safe MCP tool name');
   if (!toolArgs || Array.isArray(toolArgs) || typeof toolArgs !== 'object') throw new Error('toolArgs must be an object');
   if (detectCredentialExposure(toolArgs).length > 0) throw new Error('toolArgs appear to contain a credential');
+  if (cwd !== undefined && (typeof cwd !== 'string' || !isAbsolute(cwd))) throw new Error('cwd must be an absolute path');
+  if (expectedText !== undefined && (!tool || typeof expectedText !== 'string' || !expectedText.trim())) {
+    throw new Error('expectedText requires a tool and a non-empty string');
+  }
+  if (expectedText && detectCredentialExposure(expectedText).length > 0) throw new Error('expectedText appears to contain a credential');
 
   const child = spawnImpl(command, args, {
     env: safeEnvironment(),
     shell: false,
     stdio: ['pipe', 'pipe', 'pipe'],
+    ...(cwd ? { cwd } : {}),
   });
   let stdoutBuffer = '';
   let stderr = '';
@@ -137,8 +145,13 @@ export async function runStdioPreflight({
             finish(null, true);
             return;
           }
-          if (!toolsList.some((item) => item?.name === tool)) {
+          const selectedTool = toolsList.find((item) => item?.name === tool);
+          if (!selectedTool) {
             finish(new Error(`Selected tool ${tool} was not present in tools/list`));
+            return;
+          }
+          if (selectedTool.annotations?.readOnlyHint !== true || selectedTool.annotations?.destructiveHint === true) {
+            finish(new Error('Selected tool must explicitly declare readOnlyHint=true and must not be destructive'));
             return;
           }
           writeJsonLine(child.stdin, {
@@ -152,16 +165,25 @@ export async function runStdioPreflight({
           }
           const serialized = JSON.stringify(message.result);
           const findings = detectCredentialExposure(message.result);
+          const textContent = (Array.isArray(message.result.content) ? message.result.content : [])
+            .filter((item) => item?.type === 'text' && typeof item.text === 'string')
+            .map((item) => item.text).join('\n');
           toolCall = {
             name: tool,
             status: message.result.isError === true ? 'tool-error' : 'success',
             contentTypes: [...new Set((Array.isArray(message.result.content) ? message.result.content : [])
               .map((item) => String(item?.type ?? '').slice(0, 40)).filter(Boolean))].sort(),
             responseSha256: sha256(serialized),
+            textCharacters: textContent.length,
+            ...(expectedText ? { contentAssertion: { status: textContent.includes(expectedText) ? 'pass' : 'fail' } } : {}),
             credentialScan: { status: findings.length === 0 ? 'pass' : 'fail', findings },
           };
           if (toolCall.status !== 'success' || findings.length > 0) {
             finish(new Error('tools/call returned an error or credential-shaped output'));
+            return;
+          }
+          if (expectedText && toolCall.contentAssertion.status !== 'pass') {
+            finish(new Error('tools/call did not contain the expected public fixture text'));
             return;
           }
           finish(null, true);
@@ -223,6 +245,8 @@ function parseArgs(argv) {
     else if (arg === '--timeout-ms') options.timeoutMs = Number(nextValue(index++, arg));
     else if (arg === '--reviewer') options.reviewer = nextValue(index++, arg);
     else if (arg === '--tool') options.tool = nextValue(index++, arg);
+    else if (arg === '--cwd') options.cwd = nextValue(index++, arg);
+    else if (arg === '--expected-text') options.expectedText = nextValue(index++, arg);
     else if (arg === '--tool-args') {
       try {
         options.toolArgs = JSON.parse(nextValue(index++, arg));

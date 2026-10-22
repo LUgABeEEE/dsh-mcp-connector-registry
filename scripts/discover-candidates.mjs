@@ -72,13 +72,14 @@ export function renderCandidateReport(report) {
     `Score distribution: selected ${report.summary.scoreDistribution.selected}, watchlist ${report.summary.scoreDistribution.watchlist}, defer ${report.summary.scoreDistribution.defer}, duplicate ${report.summary.scoreDistribution.duplicate}.`,
     '',
     '> This report only recommends candidates. It does not publish, merge, delist, or create Connector descriptors.',
+    '> Score/band ranks discovery priority, not approval. A public probe is not business acceptance. Runtime/review columns show recorded claims only; verify their evidence before promotion.',
     '',
-    '| Candidate | Score | Band | Dedupe | Transport | Evidence |',
-    '|---|---:|---|---|---|---|',
+    '| Candidate | Score | Band | Public probe | Recorded runtime | Recorded human review | Dedupe | Transport | Evidence |',
+    '|---|---:|---|---|---|---|---|---|---|',
   ];
   for (const candidate of report.candidates.slice(0, 100)) {
     const evidence = candidate.evidence.map((item) => `[${item.type}](${item.url})`).join(' ');
-    lines.push(`| ${markdownCell(candidate.title)}<br><code>${markdownCell(candidate.registryName)}</code> | ${candidate.score.total} | ${candidate.score.band} | ${candidate.dedupe.level} | ${candidate.transports.map((item) => item.type).join(', ')} | ${evidence} |`);
+    lines.push(`| ${markdownCell(candidate.title)}<br><code>${markdownCell(candidate.registryName)}</code> | ${candidate.score.total} | ${candidate.score.band} | ${markdownCell(candidate.probe?.status ?? 'not-run')} | ${markdownCell(candidate.runtimeAcceptance?.status ?? 'not-run')} | ${markdownCell(candidate.review?.decision ?? 'pending')} | ${candidate.dedupe.level} | ${candidate.transports.map((item) => item.type).join(', ')} | ${evidence} |`);
   }
   if (report.rejected.length > 0) {
     lines.push('', '## Normalization rejects', '');

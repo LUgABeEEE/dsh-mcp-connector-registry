@@ -26,7 +26,10 @@ for await (const line of lines) {
           name: 'fixture_read',
           description: 'Fixture read tool.',
           inputSchema: { type: 'object', properties: {} },
-          annotations: { readOnlyHint: true, destructiveHint: false },
+          annotations: process.argv.includes('--missing-annotations') ? undefined : {
+            readOnlyHint: !process.argv.includes('--write-tool'),
+            destructiveHint: process.argv.includes('--destructive-tool'),
+          },
         }],
       },
     })}\n`);

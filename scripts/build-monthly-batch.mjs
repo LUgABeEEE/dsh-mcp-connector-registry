@@ -37,15 +37,16 @@ export function renderMonthlyBatch(report, candidates, { size }) {
     '',
     `Source snapshot: ${report.generatedAt}`,
     '',
-    `Requested ${size}; selected ${candidates.length}. Candidates are recommendations only and require human review plus real runtime acceptance.`,
+    `Requested ${size}; shortlisted ${candidates.length}. Candidates are recommendations only and require human review plus real runtime acceptance.`,
+    'Score ranks discovery priority; public probe measures reachability, not business acceptance. Runtime and review below are recorded claims, not independently verified approval by this report.',
     '',
   ];
   if (candidates.length < 4) {
     lines.push('> Blocked: fewer than four candidates met the public-reachability and evidence prerequisites. Do not lower the quality gates to fill the batch.', '');
   }
-  lines.push('| Candidate | Score | Probe | Auth | License | Domains |', '|---|---:|---|---|---|---|');
+  lines.push('| Candidate | Score | Public probe | Recorded runtime | Recorded human review | Auth | License | Domains |', '|---|---:|---|---|---|---|---|---|');
   for (const candidate of candidates) {
-    lines.push(`| ${cell(candidate.title)}<br><code>${cell(candidate.registryName)}</code> | ${candidate.score.total} | ${candidate.probe.status} | ${candidate.authentication.mode} | ${candidate.license.status} | ${candidate.classification.domains.join(', ')} |`);
+    lines.push(`| ${cell(candidate.title)}<br><code>${cell(candidate.registryName)}</code> | ${candidate.score.total} | ${cell(candidate.probe.status)} | ${cell(candidate.runtimeAcceptance?.status ?? 'not-run')} | ${cell(candidate.review?.decision ?? 'pending')} | ${cell(candidate.authentication.mode)} | ${cell(candidate.license.status)} | ${cell(candidate.classification.domains.join(', '))} |`);
   }
   lines.push(
     '',
