@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T03:24:05Z",
+  "checkedAt": "2026-10-24T03:37:38Z",
   "reviewedBy": "Codex native UI automation (not human approval)",
   "decision": "partial",
   "host": {
@@ -61,12 +61,29 @@
     "cwdOrEnvOverrides": false,
     "configurationSavedThroughUi": true,
     "scopeRetained": true,
-    "enabled": true,
+    "enabled": false,
     "observedServiceProcess": true,
-    "businessCallsIssued": 0,
-    "status": "blocked-by-mac-lock",
-    "finalCleanupPending": true,
-    "notes": "UI reported the Mac is locked and automatic unlock failed. User asked to unlock manually. Do not treat the previous phase cleanup as final cleanup of this re-enabled configuration."
+    "businessCallsIssued": 1,
+    "status": "failed-request-timeout",
+    "calls": [{
+      "displayedLocalTime": "2026-10-24 11:33–11:34 Asia/Shanghai",
+      "tool": "navigate_page",
+      "argumentsRedacted": {"url": "file://<dedicated-acceptance-workspace>/fixture.html"},
+      "status": "failed",
+      "rawUiOutput": "Error: Request timed out",
+      "originalInputAndOutputExpandedInDesktop": true,
+      "getPageTextExecuted": false
+    }],
+    "finalCleanupPending": false,
+    "notes": "After the user unlocked macOS, native Desktop showed connected. A single local synthetic-fixture navigation timed out; no subsequent read, automatic retry or external navigation was requested. An npm geckodriver --version child was observed during initialization, but no Firefox process/profile was observed at the subsequent check. This is evidence of an unresolved startup path, not proof of the root cause or default-profile isolation."
+  },
+  "finalCleanup": {
+    "temporaryConnectionDisabledInUi": true,
+    "matchingMcpFirefoxGeckodriverProcessesAfterDisable": 0,
+    "checkedAt": "2026-10-24T03:37:38Z",
+    "testConfigurationRetainedLocally": true,
+    "existingConnectionsEdited": false,
+    "credentialsExported": false
   },
   "limits": {
     "explicitProfileDesktopChainVerified": true,
@@ -74,6 +91,6 @@
     "coldStartReliabilityPassed": false,
     "humanApproval": "pending",
     "listingApproved": false,
-    "notes": "Draft uses npx without explicit profile and starts about:blank; it is not the exact configuration tested here. pages includes state-changing navigation/tab tools and is not all read-only. Independent profile is not an OS sandbox. No screenshots of unrelated conversations or profile contents are published."
+    "notes": "Draft's exact npx configuration was exercised but failed its first business call; equivalence to the successful explicit-profile phase is not established. Default-profile isolation and cold-start reliability remain unverified. pages includes state-changing navigation/tab tools and is not all read-only. Independent profile is not an OS sandbox. No screenshots of unrelated conversations or profile contents are published."
   }
 }

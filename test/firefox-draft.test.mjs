@@ -24,7 +24,7 @@ test('Firefox draft stays unpublished and pins the narrow pages-only configurati
   assert.equal(catalog.connectors.some(item => item.id === draft.id), false);
 });
 
-test('Desktop evidence preserves the initial failure and does not approve untested default configuration', async () => {
+test('Desktop evidence preserves both startup failures and does not approve the failing default configuration', async () => {
   const report = JSON.parse(await readFile(new URL('../docs/review-batches/firefox-desktop-2026-10-24.json', import.meta.url), 'utf8'));
   assert.equal(report.host.surface, 'native macOS Desktop');
   assert.equal(report.host.connectorVersionAfter, '0.2.76');
@@ -36,7 +36,16 @@ test('Desktop evidence preserves the initial failure and does not approve untest
   assert.equal(report.calls[1].rawUiText.length, report.calls[1].visibleTextCharacters);
   assert.equal(createHash('sha256').update(report.calls[1].rawUiText).digest('hex'), report.calls[1].visibleTextSha256);
   assert.equal(report.explicitProfilePhaseCleanup.temporaryConnectionDisabledInUi, true);
-  assert.equal(report.defaultConfigurationFollowUp.finalCleanupPending, true);
+  assert.equal(report.defaultConfigurationFollowUp.status, 'failed-request-timeout');
+  assert.equal(report.defaultConfigurationFollowUp.businessCallsIssued, 1);
+  assert.equal(report.defaultConfigurationFollowUp.calls[0].tool, 'navigate_page');
+  assert.equal(report.defaultConfigurationFollowUp.calls[0].rawUiOutput, 'Error: Request timed out');
+  assert.equal(report.defaultConfigurationFollowUp.calls[0].getPageTextExecuted, false);
+  assert.equal(report.defaultConfigurationFollowUp.calls[0].originalInputAndOutputExpandedInDesktop, true);
+  assert.equal(report.defaultConfigurationFollowUp.enabled, false);
+  assert.equal(report.defaultConfigurationFollowUp.finalCleanupPending, false);
+  assert.equal(report.finalCleanup.temporaryConnectionDisabledInUi, true);
+  assert.equal(report.finalCleanup.matchingMcpFirefoxGeckodriverProcessesAfterDisable, 0);
   assert.equal(report.limits.publishedDraftConfigurationEquivalent, false);
   assert.equal(report.limits.coldStartReliabilityPassed, false);
   assert.equal(report.limits.humanApproval, 'pending');
