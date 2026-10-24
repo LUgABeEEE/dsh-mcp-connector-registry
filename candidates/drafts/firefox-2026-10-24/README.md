@@ -1,6 +1,6 @@
 # Firefox #50 上架准备包
 
-状态：**未发布、人工批准 pending；显式隔离 profile 的 Desktop 调用已验证，默认配置调用超时未通过；临时连接已停用**。
+状态：**未发布、人工批准 pending；npx 兼容启动修复后 macOS Desktop 回归通过，临时连接已停用**。
 此目录不参与 catalog 构建；不得直接复制为正式卡片。
 
 ## 已核对来源
@@ -11,10 +11,10 @@
   [浏览器启动实现](https://github.com/mozilla/firefox-devtools-mcp/blob/ab64abc8e554f003b52197e4576902ac9bd6dda5/src/firefox/core.ts)。
 - 固定包 `@mozilla/firefox-devtools-mcp@0.10.6`，不自动升级到 latest。
 
-草案使用 `pages` 而非默认 basic，避免默认包含脚本执行能力。尚需验证该共享启动配置
-在 Desktop 下使用独立 profile；当前通过记录使用的是显式专用 profile，不代表
-不带 profile 参数的草案已被验收。正式卡片与最终验收参数必须一致；若需用户配置
-本地路径，先验证界面配置路径，不能把维护者本机绝对路径硬编码到目录。
+草案使用 `pages` 而非默认 basic，避免默认包含脚本执行能力。现配置使用固定包及
+本仓库维护的兼容启动器，已在 macOS Desktop 验证新建临时 profile。没有硬编码
+维护者本机路径，不修改系统 PATH、第三方源码或个人浏览器；此启动器不是 Mozilla
+官方代码，须额外人工复核。`--no-auto-profile` 与 `--no-connect-existing` 显式限制复用。
 
 ## 已有证据与限制
 
@@ -61,6 +61,25 @@
 8. 补正式 candidate 记录；具名维护者阅读证据后明确批准，最终 head CI 通过再合并。
    合并后另核验 main CI、生成目录和 CDN，不能把合并等同上线。
 
-当前不请求上架批准：本轮最终收尾已完成，但共享配置调用超时与首次驱动初始化仍待定位。
-下一步应核验默认 npx 路径的驱动/浏览器发现和超时处理，修复后重做同参数 Desktop 验收；
-不得只增加一个 PASS 标记或用显式本机路径的成功结果替代默认配置失败。
+## npx 修复及最终同参数回归
+
+见 [修复后报告](../../../docs/review-batches/firefox-npx-fix-2026-10-24.json)。上述失败保留为历史证据。
+
+- 根因定位到本机 npm PATH 驱动发现路径：Selenium Manager 0.4.36 在带 npm `.bin`
+  的 PATH 下卡住；npm geckodriver 6.0.2 的 CLI 在转发 `--version` 前调用下载逻辑。
+  相同离线诊断普通 PATH 下不到 1 秒找到现有驱动；npm PATH 下 20 秒截止仍不返回，
+  `SE_SKIP_DRIVER_IN_PATH` 对照也未解决。不把某个网络域名被拦截作为已证明根因。
+- [兼容启动器源码](../../../scripts/firefox-npx-bootstrap.cjs)只在当前进程移除含
+  geckodriver shim 的 npm `.bin`，然后加载固定官方包，拒绝版本不符和入口逃逸。
+  由 `node scripts/build-firefox-draft.mjs` 生成描述符中的 Node 内联参数；测试确保源码
+  与参数一致。不依赖 shell、不运行远程脚本，不将 OS sandbox 或完整供应链校验作为承诺。
+- 12:18（北京时间）原生 Desktop：使用草案精确参数、about:blank、无 cwd/env 覆盖，
+  新进程启动后 `navigate_page` 到本地合成页、`get_page_text({"maxLength":2000})`
+  均成功，整轮显示 15 秒；原始输入/输出已展开核对，正文 127 字符，哈希见报告。
+  观察到全新 `rust_mozprofile` 临时目录，不是早先显式 profile 或日常用户 profile。
+- 已在 UI 停用测试连接，04:21:08 UTC 核对测试进程均退出，原有连接未改动。
+- 本次是**已有依赖缓存下的新进程启动**，不是全新机器或空缓存安装；Windows/Linux
+  Desktop 未测。首次包/驱动下载仍需要网络，不能宣称全面离线可用或三平台验收通过。
+
+待真实维护者复核兼容启动器、官方来源与上述验收边界并具名批准，再补正式候选记录、
+迁入正式目录并运行最终 head CI。人工批准前不合并为上架，不改变 `published: false`。

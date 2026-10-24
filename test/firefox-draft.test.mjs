@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { firefoxNpxArgs } from '../scripts/build-firefox-draft.mjs';
 import { validateRegistryDescriptors } from '../node_modules/dsh-mcp-connector/lib/probe.js';
 
 test('Firefox draft stays unpublished and pins the narrow pages-only configuration', async () => {
@@ -15,13 +16,31 @@ test('Firefox draft stays unpublished and pins the narrow pages-only configurati
   assert.equal(draft.servers.length, 1);
   assert.equal(draft.servers[0].transport, 'stdio');
   assert.equal(draft.servers[0].command, 'npx');
-  assert.deepEqual(draft.servers[0].args, ['-y', '@mozilla/firefox-devtools-mcp@0.10.6', '--headless', '--tools', 'pages', '--start-url', 'about:blank']);
+  assert.deepEqual(draft.servers[0].args, await firefoxNpxArgs());
+  assert.deepEqual(draft.servers[0].args.slice(-8), ['--', '--headless', '--no-auto-profile', '--no-connect-existing', '--tools', 'pages', '--start-url', 'about:blank']);
   assert.equal(draft.servers[0].env, undefined);
   assert.match(draft.description, /不是全只读/);
   assert.match(draft.description, /独立 profile 不是操作系统沙箱/);
-  assert.match(draft.description, /未完成独立 DSH Desktop 验收和人工批准/);
+  assert.match(draft.description, /本仓库维护的兼容启动器/);
+  assert.match(draft.description, /人工批准仍待完成/);
   assert.match(draft.prompts[0].text, /不传 saveTo/);
   assert.equal(catalog.connectors.some(item => item.id === draft.id), false);
+});
+
+test('npx fix evidence matches generated launch args without turning runtime success into approval', async () => {
+  const report = JSON.parse(await readFile(new URL('../docs/review-batches/firefox-npx-fix-2026-10-24.json', import.meta.url), 'utf8'));
+  assert.equal(createHash('sha256').update(JSON.stringify(await firefoxNpxArgs())).digest('hex'), report.fix.argsSha256);
+  assert.equal(report.desktop.origin, 'dsh-app://app/');
+  assert.equal(report.desktop.configurationMatchesDraft, true);
+  assert.deepEqual(report.desktop.calls.map(call => call.status), ['success', 'success']);
+  assert.ok(report.desktop.calls.every(call => call.originalInputAndOutputExpanded));
+  const read = report.desktop.calls[1];
+  assert.equal(createHash('sha256').update(read.rawUiText).digest('hex'), read.visibleTextSha256);
+  assert.equal(report.cleanup.temporaryConnectionDisabledInUi, true);
+  assert.equal(report.cleanup.matchingTestProcesses, 0);
+  assert.equal(report.limits.emptyDependencyCacheInstall, 'not-tested');
+  assert.equal(report.limits.humanApproval, 'pending');
+  assert.equal(report.limits.listingApproved, false);
 });
 
 test('Desktop evidence preserves both startup failures and does not approve the failing default configuration', async () => {
