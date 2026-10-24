@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "firefox-devtools",
+  "name": "Firefox · 页面检查",
+  "vendor": "Mozilla",
+  "icon": "🦊",
+  "category": "开发工具",
+  "summary": "本地 Firefox 页面导航与文本读取（pages 模块）",
+  "description": "通过 Mozilla 官方 Firefox DevTools MCP 0.10.6 启动本地 stdio 服务。需自行安装 Node.js >=20.19.0 和 Firefox；首次启动可能下载 npm 包及驱动。本草案仅启用 pages 模块，不提供脚本执行、表单输入、网络调试或特权工具。pages 仍含新建、导航、选择和关闭页面等状态修改，不是全只读服务。必须使用独立自动化 profile，不连接日常浏览器、账号或 Cookie；独立 profile 不是操作系统沙箱。页面内容会进入模型上下文，请勿访问私人或携带凭据的地址。当前未完成独立 DSH Desktop 验收和人工批准，不正式上架。",
+  "tags": ["Firefox", "Mozilla", "浏览器", "页面检查", "stdio"],
+  "published": false,
+  "featured": false,
+  "homepage": "https://github.com/mozilla/firefox-devtools-mcp",
+  "probeStatus": "unverified",
+  "auth": { "mode": "none" },
+  "servers": [{
+    "serverKey": "firefox",
+    "serverName": "firefox-devtools",
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@mozilla/firefox-devtools-mcp@0.10.6", "--headless", "--tools", "pages", "--start-url", "about:blank"]
+  }],
+  "prompts": [{
+    "title": "读取测试页面",
+    "text": "仅使用 Firefox pages 工具检查独立自动化浏览器中的合成测试页面：先列出页面，再读取指定测试页面正文。不要访问日常浏览器或私人网页，不传 saveTo，不登录、提交表单或保存文件；若页面不属于本次验收，停止并询问我。",
+    "server": "firefox"
+  }]
+}
