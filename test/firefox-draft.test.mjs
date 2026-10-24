@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { validateRegistryDescriptors } from '../node_modules/dsh-mcp-connector/lib/probe.js';
@@ -21,4 +22,23 @@ test('Firefox draft stays unpublished and pins the narrow pages-only configurati
   assert.match(draft.description, /未完成独立 DSH Desktop 验收和人工批准/);
   assert.match(draft.prompts[0].text, /不传 saveTo/);
   assert.equal(catalog.connectors.some(item => item.id === draft.id), false);
+});
+
+test('Desktop evidence preserves the initial failure and does not approve untested default configuration', async () => {
+  const report = JSON.parse(await readFile(new URL('../docs/review-batches/firefox-desktop-2026-10-24.json', import.meta.url), 'utf8'));
+  assert.equal(report.host.surface, 'native macOS Desktop');
+  assert.equal(report.host.connectorVersionAfter, '0.2.76');
+  assert.equal(report.runtime.toolsDiscoveredInDesktop.length, 6);
+  assert.equal(report.calls[0].status, 'failed');
+  assert.equal(report.calls[0].rawUiOutput, 'Error: Request timed out');
+  assert.equal(report.calls[1].status, 'success');
+  assert.deepEqual(report.calls[1].arguments, { maxLength: 2000 });
+  assert.equal(report.calls[1].rawUiText.length, report.calls[1].visibleTextCharacters);
+  assert.equal(createHash('sha256').update(report.calls[1].rawUiText).digest('hex'), report.calls[1].visibleTextSha256);
+  assert.equal(report.explicitProfilePhaseCleanup.temporaryConnectionDisabledInUi, true);
+  assert.equal(report.defaultConfigurationFollowUp.finalCleanupPending, true);
+  assert.equal(report.limits.publishedDraftConfigurationEquivalent, false);
+  assert.equal(report.limits.coldStartReliabilityPassed, false);
+  assert.equal(report.limits.humanApproval, 'pending');
+  assert.equal(report.limits.listingApproved, false);
 });
