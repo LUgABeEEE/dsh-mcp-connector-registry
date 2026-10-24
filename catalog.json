@@ -1632,6 +1632,60 @@
     },
     {
       "schemaVersion": 1,
+      "id": "firefox-devtools",
+      "name": "Firefox · 页面检查",
+      "vendor": "Mozilla",
+      "icon": "🦊",
+      "category": "开发工具",
+      "summary": "本地 Firefox 页面导航与文本读取（macOS 已验收）",
+      "description": "通过固定 Mozilla 官方 Firefox DevTools MCP 0.10.6 启动本地 stdio 服务，使用本仓库维护的兼容启动器规避 npm 驱动脚本的 PATH 冲突；兼容代码并非 Mozilla 官方代码。需自行安装 Node.js >=20.19.0 和 Firefox；首次安装 npm 包及驱动需要网络。仅启用 pages 模块，不提供脚本执行、表单输入、网络调试或特权工具。pages 仍含新建、导航、选择和关闭页面等状态修改，不是全只读服务。显式禁用复用现有浏览器和自动持久 profile；独立 profile 不是操作系统沙箱。页面内容会进入模型上下文，网页也可能含提示注入；请勿访问私人或携带凭据的地址。已通过 macOS Desktop、已有依赖缓存下的新进程启动回归；空缓存首次安装及 Windows/Linux Desktop 未验收。",
+      "tags": [
+        "Firefox",
+        "Mozilla",
+        "浏览器",
+        "页面检查",
+        "stdio"
+      ],
+      "published": true,
+      "featured": false,
+      "homepage": "https://github.com/mozilla/firefox-devtools-mcp",
+      "probeStatus": "pass",
+      "auth": {
+        "mode": "none"
+      },
+      "servers": [
+        {
+          "serverKey": "firefox",
+          "serverName": "firefox-devtools",
+          "transport": "stdio",
+          "command": "npx",
+          "args": [
+            "-y",
+            "--package=@mozilla/firefox-devtools-mcp@0.10.6",
+            "node",
+            "-e",
+            "// First-party compatibility bootstrap, not Mozilla code. Serialized into the\n// unpublished descriptor by build-firefox-draft.mjs; no download or shell eval.\nconst fs = require('node:fs');\nconst path = require('node:path');\nconst { pathToFileURL } = require('node:url');\n\nfunction resolveLaunch(env, platform = process.platform) {\n  const pathKey = Object.keys(env).find(key => key.toUpperCase() === 'PATH') || 'PATH';\n  const separator = platform === 'win32' ? ';' : ':';\n  const dirs = (env[pathKey] || '').split(separator).filter(Boolean);\n  let entry;\n  const filtered = dirs.filter(dir => {\n    if (path.basename(dir) !== '.bin' || path.basename(path.dirname(dir)) !== 'node_modules') return true;\n    const modules = path.dirname(dir);\n    const manifest = path.join(modules, '@mozilla', 'firefox-devtools-mcp', 'package.json');\n    if (fs.existsSync(manifest)) {\n      const metadata = JSON.parse(fs.readFileSync(manifest, 'utf8'));\n      if (metadata.name !== '@mozilla/firefox-devtools-mcp' || metadata.version !== '0.10.6') {\n        throw new Error('Firefox bootstrap requires official package version 0.10.6');\n      }\n      const root = fs.realpathSync(path.dirname(manifest));\n      const candidate = fs.realpathSync(path.join(root, 'dist', 'index.js'));\n      if (!candidate.startsWith(root + path.sep)) throw new Error('Firefox entry escapes package root');\n      entry ||= candidate;\n    }\n    // Only omit npm binary-shim directories with geckodriver in this child\n    // process. Keep ordinary OS driver directories and never change user PATH.\n    return !['geckodriver', 'geckodriver.cmd', 'geckodriver.ps1']\n      .some(name => fs.existsSync(path.join(dir, name)));\n  });\n  if (!entry) throw new Error('Pinned Firefox package was not found in npm executable PATH');\n  return { entry, pathKey, value: filtered.join(separator) };\n}\n\nasync function run() {\n  const launch = resolveLaunch(process.env);\n  process.env[launch.pathKey] = launch.value;\n  process.argv = [process.execPath, launch.entry, ...process.argv.slice(1)];\n  await import(pathToFileURL(launch.entry).href);\n}\n\nmodule.exports = { resolveLaunch, run };\n\nrun().catch(error => { console.error(error.message); process.exitCode = 1; });",
+            "--",
+            "--headless",
+            "--no-auto-profile",
+            "--no-connect-existing",
+            "--tools",
+            "pages",
+            "--start-url",
+            "about:blank"
+          ]
+        }
+      ],
+      "prompts": [
+        {
+          "title": "读取测试页面",
+          "text": "仅使用 Firefox pages 工具检查独立自动化浏览器中的合成测试页面：先列出页面，再读取指定测试页面正文。不要访问日常浏览器或私人网页，不传 saveTo，不登录、提交表单或保存文件；若页面不属于本次验收，停止并询问我。",
+          "server": "firefox"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "flybest-hotels",
       "name": "FlyBest·AI 订酒店",
       "vendor": "FlyBest",
