@@ -5,8 +5,8 @@
   "vendor": "Mozilla",
   "icon": "🦊",
   "category": "开发工具",
-  "summary": "本地 Firefox 页面导航与文本读取（pages 模块）",
-  "description": "通过固定 Mozilla 官方 Firefox DevTools MCP 0.10.6 启动本地 stdio 服务，使用本仓库维护的兼容启动器规避 npm 驱动脚本的 PATH 冲突；兼容代码并非 Mozilla 官方代码。需自行安装 Node.js >=20.19.0 和 Firefox；首次安装 npm 包及驱动需要网络。本草案仅启用 pages 模块，不提供脚本执行、表单输入、网络调试或特权工具。pages 仍含新建、导航、选择和关闭页面等状态修改，不是全只读服务。显式禁用复用现有浏览器和持久 profile；独立 profile 不是操作系统沙箱。页面内容会进入模型上下文，请勿访问私人或携带凭据的地址。macOS Desktop 回归已通过，空缓存安装及其他操作系统未验收；人工批准仍待完成，不正式上架。",
+  "summary": "本地 Firefox 页面导航与文本读取（macOS 已验收）",
+  "description": "通过固定 Mozilla 官方 Firefox DevTools MCP 0.10.6 启动本地 stdio 服务，使用本仓库维护的兼容启动器规避 npm 驱动脚本的 PATH 冲突；兼容代码并非 Mozilla 官方代码。需自行安装 Node.js >=20.19.0 和 Firefox；首次安装 npm 包及驱动需要网络。仅启用 pages 模块，不提供脚本执行、表单输入、网络调试或特权工具。pages 仍含新建、导航、选择和关闭页面等状态修改，不是全只读服务。显式禁用复用现有浏览器和自动持久 profile；独立 profile 不是操作系统沙箱。页面内容会进入模型上下文，网页也可能含提示注入；请勿访问私人或携带凭据的地址。已通过 macOS Desktop、已有依赖缓存下的新进程启动回归；空缓存首次安装及 Windows/Linux Desktop 未验收。",
   "tags": [
     "Firefox",
     "Mozilla",
@@ -14,10 +14,10 @@
     "页面检查",
     "stdio"
   ],
-  "published": false,
+  "published": true,
   "featured": false,
   "homepage": "https://github.com/mozilla/firefox-devtools-mcp",
-  "probeStatus": "unverified",
+  "probeStatus": "pass",
   "auth": {
     "mode": "none"
   },

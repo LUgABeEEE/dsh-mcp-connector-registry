@@ -1,7 +1,9 @@
 # Firefox #50 上架准备包
 
-状态：**未发布、人工批准 pending；npx 兼容启动修复后 macOS Desktop 回归通过，临时连接已停用**。
-此目录不参与 catalog 构建；不得直接复制为正式卡片。
+状态：**2026-10-24 用户已明确批准兼容启动方案及限定 macOS 验收范围；正式候选记录与卡片已补齐，等待最终 CI 和条件合并**。
+此目录保留历史验收过程，不参与 catalog 构建。正式描述符位于
+[`connectors/firefox-devtools.json`](../../../connectors/firefox-devtools.json)，审核记录位于
+[`candidates/records/firefox-devtools.json`](../../records/firefox-devtools.json)。
 
 ## 已核对来源
 
@@ -81,5 +83,15 @@
 - 本次是**已有依赖缓存下的新进程启动**，不是全新机器或空缓存安装；Windows/Linux
   Desktop 未测。首次包/驱动下载仍需要网络，不能宣称全面离线可用或三平台验收通过。
 
-待真实维护者复核兼容启动器、官方来源与上述验收边界并具名批准，再补正式候选记录、
-迁入正式目录并运行最终 head CI。人工批准前不合并为上架，不改变 `published: false`。
+## 批准与正式上架门禁
+
+用户在本会话明确批准：“批准该兼容启动方案，按已说明的 macOS 验收范围继续补齐正式候选记录，
+完成最终上架检查；全部通过后合并 PR #54，并核验市场卡片上线。”
+[批准转录](https://github.com/duhu2000/dsh-mcp-connector-registry/pull/54#issuecomment-6380255895)
+明确标记由 Codex 记录，不冒充独立 GitHub 人工 review。
+
+正式卡片与已验收启动参数的 SHA-256 保持一致。历史报告中的 pending/失败是当时状态，
+没有回写为人工批准或删除失败证据。仅将描述符迁入正式目录、更新文案及验收状态；
+源码保留历史注释以保持参数字节一致，生成脚本沿用原文件名但改为输出正式描述符。
+首次下载、Windows/Linux 仍未验收。最终精确 head CI、冲突及审核反馈检查通过后才合并；
+另行检查 main CI、目录/CDN 一致性和 Desktop 市场卡片，不把合并视为上线。

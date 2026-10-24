@@ -10,7 +10,8 @@ export async function firefoxNpxArgs() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const target = new URL('../candidates/drafts/firefox-2026-10-24/firefox-devtools.json', import.meta.url);
+  // Keep the historical filename and exact bootstrap bytes for report reproducibility.
+  const target = new URL('../connectors/firefox-devtools.json', import.meta.url);
   const descriptor = JSON.parse(await readFile(target, 'utf8'));
   descriptor.servers[0].args = await firefoxNpxArgs();
   await writeFile(target, `${JSON.stringify(descriptor, null, 2)}\n`);

@@ -4,14 +4,15 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { firefoxNpxArgs } from '../scripts/build-firefox-draft.mjs';
 import { validateRegistryDescriptors } from '../node_modules/dsh-mcp-connector/lib/probe.js';
+import { verifyRuntimeAcceptance } from '../scripts/check-new-connectors.mjs';
 
-test('Firefox draft stays unpublished and pins the narrow pages-only configuration', async () => {
-  const draft = JSON.parse(await readFile(new URL('../candidates/drafts/firefox-2026-10-24/firefox-devtools.json', import.meta.url), 'utf8'));
-  const catalog = JSON.parse(await readFile(new URL('../catalog.json', import.meta.url), 'utf8'));
+test('approved Firefox listing preserves the exact macOS-accepted pages-only configuration', async () => {
+  const draft = JSON.parse(await readFile(new URL('../connectors/firefox-devtools.json', import.meta.url), 'utf8'));
+  const record = JSON.parse(await readFile(new URL('../candidates/records/firefox-devtools.json', import.meta.url), 'utf8'));
   assert.equal(validateRegistryDescriptors([draft]).length, 1);
-  assert.equal(draft.published, false);
+  assert.equal(draft.published, true);
   assert.equal(draft.featured, false);
-  assert.equal(draft.probeStatus, 'unverified');
+  assert.equal(draft.probeStatus, 'pass');
   assert.equal(draft.auth.mode, 'none');
   assert.equal(draft.servers.length, 1);
   assert.equal(draft.servers[0].transport, 'stdio');
@@ -22,9 +23,13 @@ test('Firefox draft stays unpublished and pins the narrow pages-only configurati
   assert.match(draft.description, /不是全只读/);
   assert.match(draft.description, /独立 profile 不是操作系统沙箱/);
   assert.match(draft.description, /本仓库维护的兼容启动器/);
-  assert.match(draft.description, /人工批准仍待完成/);
+  assert.match(draft.description, /空缓存首次安装及 Windows\/Linux Desktop 未验收/);
   assert.match(draft.prompts[0].text, /不传 saveTo/);
-  assert.equal(catalog.connectors.some(item => item.id === draft.id), false);
+  assert.deepEqual(verifyRuntimeAcceptance(draft, record), []);
+  assert.match(record.review.notes, /6380255895/);
+  assert.match(record.runtimeAcceptance.notes, /已有依赖缓存/);
+  const previous = JSON.parse(await readFile(new URL('../docs/review-batches/firefox-npx-fix-2026-10-24.json', import.meta.url), 'utf8'));
+  assert.equal(createHash('sha256').update(JSON.stringify(draft.servers[0].args)).digest('hex'), previous.fix.argsSha256);
 });
 
 test('npx fix evidence matches generated launch args without turning runtime success into approval', async () => {
